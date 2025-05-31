@@ -58,7 +58,7 @@ def forecast_prophet(df, weeks):
 
 st.title("Прогнозування захворюваності")
 
-model_type = st.selectbox("Оберіть модель прогнозування", ['SARIMA', 'Prophet'])
+model_type = st.selectbox("Оберіть модель прогнозування", ['Prophet','SARIMA'])
 region = st.selectbox("Оберіть регіон", ['Україна', 'Харківська область'])
 weeks = st.slider("На скільки тижнів прогнозувати?", min_value=1, max_value=52, value=12)
 
