@@ -19,7 +19,7 @@ def load_data():
                 date = pd.to_datetime(f"{year}-W{int(week)}-1", format="%G-W%V-%u")
                 records.append({"ds": date, "y": cases})
     df = pd.DataFrame(records).sort_values("ds")
-    df = df.set_index("ds").asfreq('W-MON').fillna(method='ffill').reset_index()
+    df = df.set_index("ds").asfreq('W-MON').ffill().reset_index()
     return df
 
 @st.cache_data
@@ -31,21 +31,18 @@ def load_kharkiv_data():
     df = df[["ds", "value"]].set_index("ds").resample("W-MON").mean()
     df["y"] = df["value"].interpolate(method="linear")
     df = df[["y"]].reset_index()
-    df = df.set_index("ds").asfreq('W-MON').fillna(method='ffill').reset_index()
+    df = df.set_index("ds").asfreq('W-MON').ffill().reset_index()
     return df
 
 def forecast_sarima(df, weeks):
     df_sarima = df.copy()
     df_sarima.set_index('ds', inplace=True)
     df_sarima = df_sarima.asfreq('W-MON')
-
     model = SARIMAX(df_sarima['y'], order=(0, 1, 0), seasonal_order=(2, 1, 0, 52))
     model_fit = model.fit(disp=False)
-
     forecast = model_fit.get_forecast(steps=weeks)
     forecast_values = forecast.predicted_mean.clip(lower=0)
     forecast_index = pd.date_range(start=df_sarima.index[-1] + pd.Timedelta(weeks=1), periods=weeks, freq='W-MON')
-
     return pd.DataFrame({'ds': forecast_index, 'y': forecast_values.values})
 
 def forecast_prophet(df, weeks):
@@ -55,7 +52,7 @@ def forecast_prophet(df, weeks):
     forecast = model.predict(future)
     return forecast
 
-st.title("Прогнозування захворюваності")
+st.title("Прогнозування захворюваності на ГРВІ")
 
 model_type = st.selectbox("Оберіть модель прогнозування", ['Prophet', 'SARIMA'])
 region = st.selectbox("Оберіть регіон", ['Україна', 'Харківська область'])
